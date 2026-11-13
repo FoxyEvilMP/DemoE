@@ -8,7 +8,7 @@ const LOCAL_KEY = 'e-shlyuz-local-v1';
 const channel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('e-shlyuz-demo') : null;
 export const notify = () => { channel?.postMessage('update'); window.dispatchEvent(new Event('documents-update')); };
 channel?.addEventListener('message', () => window.dispatchEvent(new Event('documents-update')));
-export interface Identity { id: string; email: string; local: boolean }
+export interface Identity { id: string; email: string; local: boolean; displayName?: string }
 const receipt = (id: string, email: string, kind: string, details = {}): Receipt => ({ id: crypto.randomUUID(), document_id: id, actor_email: email, kind, details, created_at: new Date().toISOString() });
 async function localDocuments(): Promise<DocumentRecord[]> { return await get<DocumentRecord[]>(LOCAL_KEY) || []; }
 export async function seedDemo() {

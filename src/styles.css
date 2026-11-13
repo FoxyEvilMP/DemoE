@@ -20,3 +20,11 @@
 .offer-document p+p{margin-top:10px}.offer-document a{color:#375f43;text-decoration:underline}
 .offer-actions{padding:0 24px 24px;display:flex;justify-content:flex-end}
 @media(max-width:600px){.offer-document{padding:18px;font-size:12px}.offer-actions{padding:0 18px 18px}}
+/* Brand typography and first-use forms */
+.logo .logo-mark{display:flex;align-items:center;justify-content:center;flex-shrink:0;width:48px;height:42px;margin:0;font-family:'Golos Text',system-ui,sans-serif;font-size:26px;font-weight:650;line-height:1;letter-spacing:-1.7px;color:var(--orange)}
+.template-picker{padding:18px;border:1px solid #e9ccb2;border-radius:12px;background:#fff7ee;display:grid;gap:12px}
+.template-picker strong{font-size:15px}.template-picker p{margin:6px 0 0;font-size:12px;line-height:1.6;color:var(--muted)}
+.template-picker label{margin:0}.template-picker button{justify-content:center}
+.profile-onboarding{min-height:100vh;background:var(--green);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;padding:24px}
+.profile-card{width:min(100%,420px);background:#f9faf6;border-radius:18px;padding:30px;color:#203c33}
+.profile-card h2{margin:12px 0}.profile-card p{line-height:1.6;color:var(--muted)}.profile-card form{display:grid;gap:18px;margin-top:24px}.profile-card label{display:grid;gap:8px}
