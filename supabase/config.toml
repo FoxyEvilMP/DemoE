@@ -1,0 +1,5 @@
+project_id = "e-shlyuz-demo"
+
+[functions.notify-document]
+# JWT validation is performed inside the function using auth.getUser().
+verify_jwt = false
