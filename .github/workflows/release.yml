@@ -31,4 +31,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
-        run: gh release create "$RELEASE_TAG" e-shlyuz-pwa.zip --verify-tag --title "Е-Шлюз $RELEASE_TAG" --notes-file RELEASE_NOTES.md
+        run: |
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" e-shlyuz-pwa.zip --clobber
+          else
+            gh release create "$RELEASE_TAG" e-shlyuz-pwa.zip --verify-tag --title "Е-Шлюз $RELEASE_TAG" --notes-file RELEASE_NOTES.md
+          fi
