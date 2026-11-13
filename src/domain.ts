@@ -15,10 +15,10 @@ export const MAX_FILE = 10 * 1024 * 1024;
 export const LOCAL_SENDER = 'sender@vector-b2b.ru';
 export const LOCAL_RECIPIENT = 'partner@alfa-supply.ru';
 export function normalizeEmail(value: string) { return value.trim().toLowerCase(); }
-export function parseRecipients(raw: string, sender?: string): string[] {
+export function parseRecipients(raw: string, sender?: string, allowPhone = false): string[] {
   const emails = [...new Set(raw.split(/[\s,;]+/).filter(Boolean).map(normalizeEmail))];
   if (!emails.length || emails.length > 10) throw new Error('Укажите от 1 до 10 получателей.');
-  if (emails.some(e => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) || e.length > 254)) throw new Error('Проверьте email получателей.');
+  if (emails.some(e => (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) && !(allowPhone && /^\+[1-9]\d{9,14}$/.test(e))) || e.length > 254)) throw new Error('Проверьте контакты получателей.');
   if (sender && emails.includes(normalizeEmail(sender))) throw new Error('Получатель должен отличаться от отправителя.');
   return emails;
 }

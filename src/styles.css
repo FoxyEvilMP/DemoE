@@ -28,3 +28,14 @@
 .profile-onboarding{min-height:100vh;background:var(--green);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;padding:24px}
 .profile-card{width:min(100%,420px);background:#f9faf6;border-radius:18px;padding:30px;color:#203c33}
 .profile-card h2{margin:12px 0}.profile-card p{line-height:1.6;color:var(--muted)}.profile-card form{display:grid;gap:18px;margin-top:24px}.profile-card label{display:grid;gap:8px}
+
+/* PEP enrollment and per-document OTP */
+.pep-onboarding{max-width:420px}.pep-onboarding form{display:grid;gap:14px}.pep-onboarding .offer-consent{margin:0;align-items:flex-start}.pep-onboarding .offer-consent input{margin-top:3px;flex:0 0 17px}
+.onboarding-steps{display:flex;gap:10px;margin:20px 0}.onboarding-steps span{flex:1;border-bottom:3px solid var(--line);padding:0 0 9px;font-size:11px;color:var(--muted)}.onboarding-steps .active{border-color:var(--orange);color:var(--green);font-weight:650}
+.quick-profiles{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0}.quick-profiles>span{width:100%;font-size:11px;color:var(--muted)}.quick-profiles button{font-size:11px;padding:8px 12px;max-width:100%;overflow-wrap:anywhere}
+.otp-notice{display:flex;align-items:flex-start;gap:12px;border:1px solid #e6c7a6;background:#fff2df;border-radius:12px;padding:16px;margin:20px 0;color:var(--green)}.otp-notice>svg{color:#bb692b;flex-shrink:0}.otp-notice span{display:block;font-size:12px}.otp-notice strong{display:block;font-size:34px;letter-spacing:8px;margin:7px 0}.otp-notice small{display:block;font-size:11px;line-height:1.6}
+input.otp-input{font-size:28px;letter-spacing:12px;text-align:center;min-height:62px;background:#fff}.otp-actions{display:flex;flex-direction:column;align-items:flex-start;gap:12px;margin-top:18px}
+.online-entry{margin-top:20px}.pep-back{position:fixed;top:16px;right:16px;z-index:5;background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px;color:var(--green)}
+.signature-methods{display:grid;gap:16px}.signature-methods button{padding:18px;justify-content:flex-start;text-align:left;white-space:normal}.signature-methods strong,.signature-methods small{display:block}.signature-methods small{font-size:11px;color:var(--muted);margin-top:5px}.pep-signing form{display:grid;gap:16px}.pep-signing>p{font-size:12px;line-height:1.7}.pep-signing>.text-button{margin-top:18px}
+.pep-profile{margin-bottom:24px}.pep-profile dl{display:grid;grid-template-columns:1fr 2fr;gap:12px;font-size:12px;overflow-wrap:anywhere}.pep-profile dd{margin:0}.timeline code{word-break:break-all}.user-info{max-width:260px}.user-info strong,.user-info small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:600px){.onboarding-steps{gap:6px}.pep-profile dl{grid-template-columns:1fr}.pep-profile dd{margin-bottom:8px}.pep-back{position:absolute;font-size:11px}.otp-notice strong{font-size:30px}.pep-onboarding{padding-top:12px}}

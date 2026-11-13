@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { get, set } from 'idb-keyval';
 import { type DocumentRecord, type Draft, type Receipt, type Status, LOCAL_RECIPIENT, LOCAL_SENDER, normalizeEmail, parseRecipients, sha256, templateFile, validateFile } from './domain';
+import { consumePep, type PepProfile, type PepProof } from './pep';
 const url = import.meta.env.VITE_SUPABASE_URL;
 const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
 export const supabase = url && key ? createClient(url, key) : null;
@@ -8,7 +9,7 @@ const LOCAL_KEY = 'e-shlyuz-local-v1';
 const channel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('e-shlyuz-demo') : null;
 export const notify = () => { channel?.postMessage('update'); window.dispatchEvent(new Event('documents-update')); };
 channel?.addEventListener('message', () => window.dispatchEvent(new Event('documents-update')));
-export interface Identity { id: string; email: string; local: boolean; displayName?: string }
+export interface Identity { id: string; email: string; local: boolean; displayName?: string; pep?: PepProfile }
 const receipt = (id: string, email: string, kind: string, details = {}): Receipt => ({ id: crypto.randomUUID(), document_id: id, actor_email: email, kind, details, created_at: new Date().toISOString() });
 async function localDocuments(): Promise<DocumentRecord[]> { return await get<DocumentRecord[]>(LOCAL_KEY) || []; }
 export async function seedDemo() {
@@ -24,15 +25,18 @@ export async function listDocuments(user: Identity): Promise<DocumentRecord[]> {
   if (error) throw error;
   return data as DocumentRecord[];
 }
-export async function createDocument(user: Identity, draft: Draft) {
+export async function createDocument(user: Identity, draft: Draft, proof?: PepProof) {
   validateFile(draft.file);
-  const emails = parseRecipients(draft.recipients, user.email);
+  const emails = parseRecipients(draft.recipients, user.email, user.local);
   if (!draft.title.trim() || !draft.number.trim() || !draft.date || !Number.isFinite(draft.amount) || draft.amount < 0) throw new Error('Заполните реквизиты документа.');
   const hash = await sha256(await draft.file.arrayBuffer());
+  if (proof && !user.local) throw new Error('Демо-ПЭП не используется для онлайн-обмена.');
+  if (proof && proof.pepIdentifier !== user.email) throw new Error('ПЭП принадлежит другому участнику.');
+  const signature = proof ? consumePep(proof, user.pep, hash, draft.kind) : { method: 'kep_demo', simulated: true, sha256: hash };
   const id = crypto.randomUUID();
   if (user.local) {
     const now = new Date().toISOString();
-    const doc: DocumentRecord = { id, sender_id: user.id, sender_email: user.email, title: draft.title.trim(), kind: draft.kind, number: draft.number.trim(), date: draft.date, amount: draft.amount, filename: draft.file.name, file_size: draft.file.size, file_path: id, sha256: hash, created_at: now, quarantine_reason: draft.quarantineReason || null, document_recipients: emails.map(email => ({ email, status: draft.quarantineReason ? 'quarantine' : 'delivered', reason: draft.quarantineReason || null, updated_at: now, mail_status: 'not_configured' })), receipts: [receipt(id, user.email, 'sender_signed', { simulated: true, sha256: hash }), receipt(id, user.email, 'delivered', { transport: 'local_demo' })] };
+    const doc: DocumentRecord = { id, sender_id: user.id, sender_email: user.email, title: draft.title.trim(), kind: draft.kind, number: draft.number.trim(), date: draft.date, amount: draft.amount, filename: draft.file.name, file_size: draft.file.size, file_path: id, sha256: hash, created_at: now, quarantine_reason: draft.quarantineReason || null, document_recipients: emails.map(email => ({ email, status: draft.quarantineReason ? 'quarantine' : 'delivered', reason: draft.quarantineReason || null, updated_at: now, mail_status: 'not_configured' })), receipts: [receipt(id, user.email, 'sender_signed', signature), receipt(id, user.email, 'delivered', { transport: 'local_demo' })] };
     await set(`file:${id}`, draft.file); await set(LOCAL_KEY, [doc, ...await localDocuments()]); notify(); return { id, mail: 'Локальное демо: письма не отправлены.' };
   }
   const path = `${user.id}/${id}/${draft.file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
@@ -57,7 +61,7 @@ export async function sendNotifications(id: string) {
   const failed = data.results?.filter((r: { accepted: boolean }) => !r.accepted).length || 0;
   return failed ? `Не все письма приняты сервисом: ${failed}. Можно повторить отправку.` : 'Почтовый сервис принял уведомления. Доставка в ящик может занять время.';
 }
-export async function respond(user: Identity, doc: DocumentRecord, status: Status, reason = '') {
+export async function respond(user: Identity, doc: DocumentRecord, status: Status, reason = '', proof?: PepProof) {
   if (!['signed', 'rejected', 'delivered'].includes(status)) throw new Error('Недопустимое действие.');
   if (status === 'rejected' && !reason.trim()) throw new Error('Укажите причину отказа.');
   if (user.local) {
@@ -67,10 +71,17 @@ export async function respond(user: Identity, doc: DocumentRecord, status: Statu
     if (['signed','rejected'].includes(me.status)) throw new Error('По документу уже принято решение.');
     if (me.status === 'quarantine' && status !== 'delivered') throw new Error('Сначала повторите проверки карантина.');
     if (status === 'delivered' && me.status !== 'quarantine') throw new Error('Документ уже прошёл проверки.');
+    let signature: Record<string, unknown> = {};
+    if (status === 'signed') {
+      await downloadOriginal(user, current);
+      if (proof && proof.pepIdentifier !== user.email) throw new Error('ПЭП принадлежит другому участнику.');
+      signature = proof ? consumePep(proof, user.pep, current.sha256, current.kind) : { method: 'kep_demo', sha256: current.sha256 };
+    } else if (proof) throw new Error('Код ПЭП предназначен только для подписания.');
     me.status = status; me.reason = reason || null; me.updated_at = new Date().toISOString();
-    current.receipts.push(receipt(doc.id, user.email, status === 'signed' ? 'recipient_signed' : status === 'rejected' ? 'rejected' : 'quarantine_released', { simulated: true, reason }));
+    current.receipts.push(receipt(doc.id, user.email, status === 'signed' ? 'recipient_signed' : status === 'rejected' ? 'rejected' : 'quarantine_released', { simulated: true, reason, ...signature }));
     await set(LOCAL_KEY, docs); notify(); return;
   }
+  if (proof) throw new Error('Демо-ПЭП не используется для онлайн-обмена.');
   const { error } = await supabase!.rpc('respond_document', { p_document_id: doc.id, p_status: status, p_reason: reason || null });
   if (error) throw error; notify();
 }
