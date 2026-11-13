@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+server.env*
+*.tsbuildinfo
+supabase/.temp/
+supabase/.branches/
+test-results/
+*.zip
