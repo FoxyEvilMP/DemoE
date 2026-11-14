@@ -3,3 +3,7 @@ project_id = "e-shlyuz-demo"
 [functions.notify-document]
 # JWT validation is performed inside the function using auth.getUser().
 verify_jwt = false
+
+[functions.pep-email]
+# Public enrollment uses delivered OTP; signing authenticates with auth.getUser().
+verify_jwt = false
